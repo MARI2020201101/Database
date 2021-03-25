@@ -167,3 +167,205 @@ select *
 from sungjuk
 order by addr asc , sno asc
 ////////////////////////////////////////////////////////////////////////
+[distinct]
+select distinct addr from sungjuk;
+[group by]
+ - 컬럼에 동일 내용끼리 그룹화
+ - 형식) group by 컬럼1, 컬럼2, 컬럼3~~
+ - 1차그룹핑 2차그룹핑 .. n차 그룹핑 가능
+ 
+ select addr, count(addr) 
+ from sungjuk
+ group by addr;
+ 
+ select addr, uname
+ from sungjuk
+ group by addr;
+ --> error! not a group by expression. 
+ -- 한개의 값만 가지고 있지 않기 때문에 select할수없다. uname중 누구를 뽑을건데! 
+ -- 따라서 group by는 집계함수와 함께 많이 사용된다. 
+ 
+ select count(addr) cnt ,addr
+ from sungjuk
+ group by addr;
+ 
+ select count(*) , addr
+ from sungjuk 
+ group by addr;
+ 
+ select addr
+ from sungjuk
+ group by addr
+ order by addr desc;
+ 
+ select count(*), addr
+ from sungjuk
+ group by addr
+ order by count(*) desc; --주소별 인원수를 내림차순 조회하기
+ 
+ select count(*) cnt , addr
+ from sungjuk
+ group by addr
+ order by cnt desc;
+ --from 성적에서 -> group -> select -> order 정렬
+ --sql을 분석할 때는 순차접근을 하면 안된다. 
+ 
+ select addr, max(kor)
+ from sungjuk
+ group by addr;
+ 
+  select addr, min(kor)
+ from sungjuk
+ group by addr;
+ 
+  select addr, min(kor),max(kor),avg(kor),sum(kor)
+ from sungjuk
+ group by addr;
+ 
+ select addr, min(kor),max(kor),avg(kor),sum(kor)
+ from sungjuk
+ group by addr 
+ order by addr;
+ 
+  select addr, min(kor),max(kor),round(avg(kor)) 평균 ,sum(kor)
+ from sungjuk
+ group by addr 
+ order by 평균 desc;
+ 
+   select addr, min(kor),max(kor),round(avg(kor),2) 평균 ,sum(kor)
+ from sungjuk
+ group by addr 
+ order by 평균 desc;
+ 
+ select addr as address
+    , min(kor) as min_kor
+    ,max(kor) as max_kor
+    ,round(avg(kor),1) as avg_kor
+    ,sum(kor) as sum_kor
+ from sungjuk
+ group by addr 
+ order by avg_kor desc;
+ 
+ select count(addr) cnt_addr, addr 
+ from sungjuk
+ where aver >= 70
+ group by addr
+
+ order by cnt_addr;
+ 
+ --from -> where -> group ->select ->order by
+ select addr, kor, eng, mat
+ from sungjuk
+ order by addr ,kor;
+ 
+ [having 절]
+ select addr, count(*)
+ from sungjuk
+ group by addr
+ having addr in('Jeju','Suwon');
+ 
+  select addr, count(*)
+ from sungjuk
+ group by addr
+ having count(*) =3;
+ 
+ select addr, count(*)
+ from sungjuk
+ group by addr
+ having count(*) >=3;
+ 
+ select addr, round(avg(kor))
+ from sungjuk
+ group by addr
+ having round(avg(kor)) >=50;
+ 
+select addr, round(avg(kor))
+ from sungjuk
+ group by addr
+ having round(avg(kor)) >=50 
+ order by round(avg(kor)) desc;
+ 
+ select addr, round(avg(kor)) as avg_kor
+ from sungjuk
+ group by addr
+ having round(avg(kor)) >=50 
+ order by round(avg(kor)) desc;
+ 
+ 
+ select
+ count(*),addr
+ from sungjuk
+ where aver >= 70
+ group by addr
+ having count(addr) <2
+ order by count(addr) ;
+ 
+ //////////////////////////////////////////////////////////////////////
+ [CASE WHEN ~ THEN END 구문]
+ 자바의 IF문과 비슷
+    CASE WHEN 조건1 THEN 조건만족시 값1
+        WHEN 조건2 THEN 조건만족시 값2
+        WHEN 조건3 THEN 조건만족시 값3 ...
+        ...
+        ELSE 값
+    END 결과컬럼명
+    
+SELECT UNAME, ADDR FROM SUNGJUK;
+방식은 여러가지가 있다. 
+자바에서 해결이 안되면 쿼리로 날려서 해결할 수도 있는 것이다!
+
+SELECT ADDR, UNAME,
+CASE WHEN ADDR = 'Seoul' THEN '서울'
+    WHEN ADDR = 'Jeju' then '제주'
+    when addr = 'Suwon' then '수원'
+    else '기타'
+end as juso
+FROM SUNGJUK;
+
+select uname, kor, 
+case when kor >=90 then 'A학점'
+    when kor >= 80 then 'B학점'
+    when kor >=70 then 'C학점'
+    when kor >=60 then 'D학점'
+    else 'F학점'
+end as 학점
+from sungjuk;
+
+select uname, kor, 
+case when kor >=90 then 'A학점'
+    when kor >= 80 then 'B학점'
+    when kor >=70 then 'C학점'
+    when kor >=60 then 'D학점'
+    else 'F학점'
+end 학점 --as 생략가능
+from sungjuk;
+-- case~when then 구문으로 가공된 컬럼을 select해서 보여주는 것이다.
+
+select uname, kor, 
+case when kor >=90 and kor <=100 then 'A학점'
+    when kor >= 80 and kor <=89 then 'B학점'
+    when kor >=70 and kor <=79 then 'C학점'
+    when kor >=60 and kor <=69 then 'D학점'
+    else 'F학점'
+end 학점 --as 생략가능
+from sungjuk;
+
+select 학점, count(*) from(
+select uname, kor, 
+case when kor >=90 and kor <=100 then 'A학점'
+    when kor >= 80 and kor <=89 then 'B학점'
+    when kor >=70 and kor <=79 then 'C학점'
+    when kor >=60 and kor <=69 then 'D학점'
+    else 'F학점'
+end 학점 --as 생략가능
+from sungjuk)
+group by 학점 ;
+
+select uname, kor, 
+case when kor between 90 and 100 then 'A학점'
+    when kor between 80 and 89 then 'B학점'
+    when kor between 70 and 79 then 'C학점'
+    when kor between 60 and 69 then 'D학점'
+    else 'F학점'
+end 학점 --as 생략가능
+from sungjuk;
