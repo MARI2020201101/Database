@@ -235,3 +235,137 @@ from emp;
       select empno, sal from emp
       where not sal>200 and sal<300 
       order by sal;
+      
+문31) 부서코드별 급여합계를 구하시오
+select sum(sal), deptno
+from emp
+group by deptno
+order by deptno;
+
+문32) 부서코드별 급여합계를 구해서  그 합계값이 1500이상만 조회하시오
+select * from ( --5)
+select sum(sal) as s_sal, deptno --3)
+from emp    --실행순서 1)
+group by deptno) --2)
+where s_sal>=1500; --4)
+
+select sum(sal) as s_sal, deptno 
+from emp group by deptno having sum(sal) >= 1500;
+
+문33) 부서별 급여평균이 300이상 조회하시오
+select avg(sal), deptno
+from emp
+group by deptno
+having avg(sal)>= 300;
+
+문34) 급여가 300이상 데이터중에서 부서코드별 급여평균을 구해서 급여평균순으로 조회하시오
+select round(avg(sal)) avg_sal
+from
+(select *
+from emp
+where sal >= 300)
+group by deptno
+order by avg_sal desc;
+
+select deptno, round(avg(sal))
+from emp
+where sal>= 300
+group by deptno
+order by avg(sal);
+
+문35) 급여가 300이상 데이터중에서 부서코드별 급여평균이 400이상을 급여순으로 조회하시오
+
+select avg(sal), deptno
+from (select *from emp where sal>=300)
+group by deptno
+having avg(sal)>=400
+order by avg(sal) desc
+;
+
+문36) hiredate칼럼을 사용하여 월별로 입사한 인원수를 구하시오
+
+select * from emp;
+select  TO_CHAR(hiredate,'MM')||'월' 입사월, count(*)||'명' AS 인원수
+from emp
+group by TO_CHAR(hiredate,'MM')
+order by TO_CHAR(hiredate,'MM') ;
+
+문37) 매니저별 담당인원수를 조회하시오
+
+SELECT * FROM EMP;
+select mgr from emp order by mgr;
+
+SELECT COUNT(*), MGR
+FROM EMP
+GROUP BY MGR;
+
+문38) 사원번호 7654와 급여보다 적은 행을 조회하시오
+
+DESC EMP;
+
+SELECT * FROM EMP
+WHERE SAL <(
+SELECT SAL FROM EMP
+WHERE EMPNO = 7654);
+
+문39) 부서별로 급여+커미션를 구했을때  최대값, 최소값, 평균값(반올림 해서)을 부서순으로 조회하시오
+SELECT MAX(SUM), MIN(SUM) , ROUND(AVG(SUM),0)
+FROM(
+SELECT DEPTNO, SAL + NVL(COMM,0) AS SUM
+FROM EMP
+order by deptno)
+GROUP BY DEPTNO;
+
+SELECT DEPTNO, sum(SAL + NVL(COMM,0)) AS SUM
+FROM EMP
+GROUP BY DEPTNO
+order by deptno
+
+
+select * from emp;
+
+select ename, (TO_CHAR(SYSDATE,'YYYY') - TO_CHAR(hiredate,'YYYY'))||'년' AS 근속년수 
+from emp;
+
+SELECT ENAME , SYSDATE - HIREDATE FROM EMP;
+SELECT ENAME , TRUNC((SYSDATE - HIREDATE)/365) AS 근속년수 FROM EMP 
+ORDER BY 근속년수 DESC;
+
+SELECT ENAME||'의 근속년수 : '|| TRUNC((SYSDATE - HIREDATE)/365)||'년' AS 근속년수
+FROM EMP;
+
+SELECT ename , TRUNC((SYSDATE - HIREDATE)/365) 근속년수
+FROM EMP 
+WHERE TRUNC((SYSDATE - HIREDATE)/365)  =(
+SELECT TRUNC((SYSDATE - HIREDATE)/365) as g 
+FROM EMP WHERE ENAME = '손흥민') ;
+
+select * from emp where TRUNC((SYSDATE - HIREDATE)/365) = (
+SELECT TRUNC((SYSDATE - HIREDATE)/365)
+FROM EMP WHERE ENAME = '손흥민');
+
+문제 43)
+select
+empno, ename, hiredate, (sal*12)+NVL(COMM,0) 현재연봉, ((sal*12)+NVL(COMM,0))*1.1 인상연봉
+from( select *
+from emp
+where
+TRUNC((SYSDATE - HIREDATE)/365)>=10)
+order by 인상연봉 desc; 
+
+문제 44) 입사년도 짝수인 사원들의 월급의 평균을 job별로 출력하시오
+
+SELECT JOB, AVG(SAL)
+FROM(
+select *
+from emp
+where MOD(TO_NUMBER(TO_CHAR(HIREDATE,'YY')),2) =0)
+GROUP BY JOB;
+
+SELECT EXTRACT(YEAR FROM HIREDATE) FROM EMP;
+
+SELECT JOB, AVG(SAL)
+FROM EMP
+WHERE 
+MOD(EXTRACT(YEAR FROM HIREDATE) , 2) =0
+GROUP BY JOB;
