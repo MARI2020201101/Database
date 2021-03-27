@@ -172,3 +172,194 @@ where gcode like 'p%';
 
 ////////////////////////////////////////////////////////////////////////
 [테이블 조인]
+-형식)
+    from 테이블1 join 테이블2 on 조건절 ; --표준SQL(ANSI)
+    
+    FROM 테이블1, 테이블2 ON 조건절; -- ORACLE DB
+    
+    SELECT T1.*,T2.*,T3.*
+    FROM T1 JOIN T2
+    ON T1.X=T2.X
+    JOIN T3 
+    ON T1.Y = T3.Y--3개조인
+    
+    SELECT *
+    FROM T1 JOIN T2
+    ON T1.X = T2.X JOIN T3
+    ON T1.Y = T3.Y JOIN T4
+    ON T1.Z = T4.Z; --4개조인
+    
+- 조건절 : WHERE, HAVING( GROUP BY 와 함께 ), ON (JOIN과 함께)
+- 물리적 테이블 : 실제로 DB에 CREATE 한 테이블
+- 논리적 테이블 : SQL문에 의해 가공된 테이블. 보여주기용 
+
+물리적 테이블과 논리적 테이블은 서로 동등한 관계
+
+--학번을 기준으로 수강테이블과 학생테이블을 조인하기
+
+SELECT * FROM TB_SUGANG;
+
+SELECT *
+FROM TB_STUDENT ST
+JOIN TB_SUGANG  SG ON ST.HAKNO = SG.HAKNO;
+--INNER라는 말은 생략 가능. 가장 기본형
+--HAKNO 라는 컬럼의 이름이 같아서 HAKNO_1하는 식으로 알아서 바뀌어 나오고 있음
+
+SELECT *
+FROM TB_STUDENT ST
+LEFT JOIN TB_SUGANG  SG ON ST.HAKNO = SG.HAKNO;
+
+SELECT ST.*, SG.*
+FROM TB_STUDENT ST
+JOIN TB_SUGANG  SG ON ST.HAKNO = SG.HAKNO;
+
+SELECT ST.*, SG.GCODE, SG.SNO
+FROM TB_STUDENT ST
+JOIN TB_SUGANG  SG ON ST.HAKNO = SG.HAKNO;
+
+SELECT *
+FROM TB_STUDENT ST
+JOIN TB_SUGANG  SG ON ST.HAKNO = SG.HAKNO
+JOIN TB_GWAMOK GM ON SG.GCODE = GM.GCODE;
+
+SELECT SG.*, gm.ghakjum,gm.gname,gm.regdt
+FROM TB_SUGANG SG
+JOIN TB_GWAMOK  GM ON SG.GCODE = GM.GCODE;
+
+--조회할 때 테이블간에 중복되지 않는 컬럼명은 테이블명을 생략할 수 있다. 
+SELECT SG.*, ghakjum, gname, regdt
+FROM TB_SUGANG SG
+JOIN TB_GWAMOK  GM ON SG.GCODE = GM.GCODE;
+
+문1)수강신청을 한 학생들 중에서 '제주'에 사는 학생들만 학번, 이름, 주소를 조회하시오
+
+SELECT * FROM TB_STUDENT;
+
+SELECT HAKNO, UNAME, ADDRESS
+FROM TB_STUDENT
+WHERE ADDRESS = '제주';
+
+--어느 테이블을 기준으로 잡을것인가..
+
+SELECT ADDRESS,SG.HAKNO,UNAME
+FROM TB_SUGANG SG JOIN TB_STUDENT ST
+                ON SG.HAKNO = ST.HAKNO
+                WHERE ADDRESS = '제주';
+                
+SELECT A.ADDRESS, A.HAKNO, A.UNAME               
+FROM(
+SELECT ADDRESS,SG.HAKNO,UNAME
+FROM TB_SUGANG SG JOIN TB_STUDENT ST
+                ON SG.HAKNO = ST.HAKNO) A
+WHERE A.ADDRESS = '제주';
+
+문2)지역별로 수강신청 인원수, 지역을 조회하시오
+     서울 2명
+     제주 1명
+     
+SELECT * FROM TB_SUGANG SU
+JOIN TB_STUDENT ST ON SU.HAKNO = ST.HAKNO
+;     
+
+SELECT COUNT(SU.HAKNO), MAX(ST.UNAME) FROM TB_SUGANG SU
+GROUP BY SU.HAKNO
+JOIN TB_STUDENT ST ON SU.HAKNO = ST.HAKNO; 
+
+
+SELECT HAKNO , COUNT(HAKNO)
+FROM TB_SUGANG
+GROUP BY HAKNO; 
+
+SELECT A.HAKNO,TB_STUDENT.ADDRESS,TB_STUDENT.UNAME
+FROM
+(SELECT HAKNO , COUNT(HAKNO)
+FROM TB_SUGANG
+GROUP BY HAKNO) A JOIN TB_STUDENT 
+ON TB_STUDENT.HAKNO = A.HAKNO;
+
+--한 학생이 수강신청을 여러개 할 수 있으므로 -> 학생별로 그룹핑해서 한개 레코드씩으로 묶고.
+--묶은 그 학생의 정보를 학생테이블과 조인해서 가져온다 
+
+SELECT B.ADDRESS, COUNT(*) FROM
+(SELECT A.HAKNO,TB_STUDENT.ADDRESS ,TB_STUDENT.UNAME FROM
+(SELECT HAKNO , COUNT(HAKNO) FROM TB_SUGANG GROUP BY HAKNO) A 
+    JOIN TB_STUDENT ON TB_STUDENT.HAKNO = A.HAKNO) B
+    GROUP BY B.ADDRESS;
+
+SELECT COUNT(ADDRESS)수강인원, ADDRESS 주소 
+FROM TB_SUGANG SG
+    JOIN TB_STUDENT  ST ON SG.HAKNO= ST.HAKNO
+    GROUP BY ADDRESS; 
+        
+문3)과목별 수강 신청 인원수, 과목코드, 과목명를 조회하시오 
+     d001 웹표준 2명 
+     d002 포토샵 1명
+     p001 OOP   2명
+     
+SELECT * FROM TB_GWAMOK;
+
+SELECT GCODE, COUNT(GCODE)
+FROM TB_SUGANG
+GROUP BY GCODE;
+
+SELECT GM.GCODE 과목코드, COUNT(GM.GCODE)||'명'수강인원, MAX(GM.GNAME) 과목명
+FROM TB_SUGANG SG
+JOIN TB_STUDENT ST ON SG.HAKNO = ST.HAKNO
+JOIN TB_GWAMOK GM ON GM.GCODE = SG.GCODE
+GROUP BY GM.GCODE;
+
+문4) 학번별 수강신청과목의 총학점을 학번별순으로 조회하시오
+     g1001  홍길동  6
+     g1002  홍길동  6
+     g1005  진달래  6
+     
+SELECT * FROM TB_SUGANG ;
+
+SELECT * FROM TB_STUDENT ST JOIN TB_SUGANG SG ON sg.hakno = st.hakno
+                            JOIN TB_GWAMOK GM ON sg.GCODE = GM.GCODE 
+                            ;
+SELECT * FROM TB_GWAMOK;
+
+----------------------답-------------------------------------------
+SELECT SG.HAKNO ,SUM(GM.GHAKJUM),MAX(ST.UNAME) FROM TB_STUDENT ST 
+                            JOIN TB_SUGANG SG ON sg.hakno = st.hakno
+                            JOIN TB_GWAMOK GM ON sg.GCODE = GM.GCODE 
+                            GROUP BY SG.HAKNO
+                            ORDER BY sg.hakno;
+                            
+SELECT SG.HAKNO, COUNT(*) FROM TB_SUGANG SG JOIN TB_STUDENT ST ON sg.hakno = st.hakno
+GROUP BY SG.HAKNO;
+문5) 학번 g1001이 수강신청한 과목을 과목코드별로 조회하시오
+     g1001  p001  OOP
+     g1001  p003  JSP  
+     g1001  d001  웹표준
+---------------------------------------답-------------
+SELECT  A.HAKNO,A.GCODE, B.GNAME FROM     
+(SELECT * FROM TB_SUGANG WHERE HAKNO = 'g1001') A 
+JOIN TB_GWAMOK B ON A.GCODE = B.GCODE;
+
+     
+     
+문6)수강신청을 한 학생들의 학번, 이름 조회
+----------------------------------------------답
+SELECT A.HAKNO, B.UNAME FROM
+(SELECT HAKNO FROM TB_SUGANG 
+GROUP BY HAKNO) A JOIN TB_STUDENT B ON A.HAKNO = B.HAKNO ;
+
+     
+문7)수강신청을 하지 않은 학생들의 학번, 이름 조회
+SELECT SUB.HAKNO, SUB.UNAME FROM(
+SELECT * FROM TB_STUDENT A LEFT JOIN TB_SUGANG B ON A.HAKNO = B.HAKNO) AS SUB
+;
+
+SELECT A.UNAME, A.HAKNO FROM TB_STUDENT A LEFT JOIN TB_SUGANG B ON A.HAKNO = B.HAKNO
+WHERE B.SNO IS NULL;
+
+SELECT SUB.* FROM (
+SELECT * FROM(
+SELECT * FROM TB_STUDENT A LEFT JOIN TB_SUGANG B ON A.HAKNO = B.HAKNO)
+WHERE SNO IS NULL ) SUB;
+
+-----------------------------------답
+SELECT A.UNAME, A.HAKNO FROM TB_STUDENT A LEFT JOIN TB_SUGANG B ON A.HAKNO = B.HAKNO
+WHERE B.SNO IS NULL;
