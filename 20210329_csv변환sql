@@ -1,0 +1,14 @@
+[도로명 주소 csv파일 변환]
+- 우편번호 . 도로명 주소를 테이블에 저장하기
+- 공공데이터 data.go.kr에서 무료로 다운 가능
+- zipdoro.csv준비하기
+
+1) zipdoro.csv내용을 저장하는 zipdoro 테이블 생성
+create table zipdoro ( 
+        zipcode char(5)         --우편번호. char는 고정길이 문자열
+        ,address varchar(255)   --주소
+        );
+select count (*) from zipdoro;
+commit;
+select * from zipdoro where zipcode <1010;
+

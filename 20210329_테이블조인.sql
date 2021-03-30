@@ -106,8 +106,12 @@ select *
  --------------------------------------------------------답----------
  select su.gcode, gw.gname , count(gw.gname) 수강인원 from tb_sugang su 
     join tb_gwamok gw on su.gcode = gw.gcode
+    where su.gcode like 'p%'
     group by su.gcode, gw.gname
     order by su.gcode;
+    
+-----------------------------------------------------------------------
+
  
  문제11) OOP교과목을 신청한 학생들의 학번과 이름출력
  p001 OOP g1001 홍길동
@@ -116,3 +120,59 @@ select *
  (select su.gcode,hakno,gname from tb_sugang su 
     join tb_gwamok gw on su.gcode = gw.gcode 
     where gw.gname = 'OOP') A JOIN tb_student st on A.hakno= st.hakno;
+
+////////////////////////////////////////////////////////////////////////
+[rownum]: 행번호! 
+select hakno, uname, rownum from tb_student;
+--행번호에 별칭 부여하기
+select hakno, uname, rownum rn from tb_student;
+--행번호로 정렬하기
+select hakno, uname, rownum from tb_student
+order by rownum desc;
+
+--이름으로 정렬하기 : 행번호가 먼저 부여되고 -> 정렬된다. order by는 select한 후에 하므로!
+select hakno, uname, rownum from tb_student
+order by uname;
+
+select hakno, uname, rownum rn from tb_student 
+where rownum< 4;
+--where 먼저하고 select 하므로 rn이라는 alias를 where 에서 쓸수없다.. 
+
+select hakno, uname, rownum rn from tb_student
+where rownum between 1 and 3;
+
+--rownum칼럼은 셀프조인후에 행번호 추가하고 조건절로 활용한다
+select hakno, uname, rownum, rn
+from(
+select hakno, uname, rownum rn from tb_student)
+where rn >3;
+
+////////////////////////////////////////////////////
+문제12) 과목테이블에서 과목이름을 내림차순 정렬 후, 행번호 4~6번 사이만 조회하시오
+select * from (
+select gcode, gname,rownum rn from tb_gwamok)
+where rn between 4 and 6;
+select * from(
+select gcode, gname,rownum rn from tb_gwamok)
+order by gname desc;
+
+-----------------------------------------------------------
+select * from(
+select a.*, rownum rn from(
+select gcode, gname from tb_gwamok order by gname desc) a) 
+where rn >4
+;
+
+////////////////////////////////////////////////////////////////
+문제13) 학번별 수강신청한 총학점을 구하고, 학번별 정렬해서 행번호 4~6만 조회하시오
+단, 수강신청을 하지않은 학생의 총학점도 0으로 표시
+select * from (
+select a.*,rownum rn from( 
+select st.hakno,sum(nvl(gw.ghakjum,0)) 총학점
+        from tb_sugang su join tb_gwamok  gw on su.gcode = gw.gcode
+                right outer join tb_student st on st.hakno=su.hakno
+                            group by st.hakno
+                            order by st.hakno) a)                
+                    where rn between 4 and 6;
+                    
+                    commit;
